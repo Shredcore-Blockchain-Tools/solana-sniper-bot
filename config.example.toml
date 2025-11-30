@@ -1,0 +1,179 @@
+[config]
+# Your license key (mandatory). Must not be empty.
+LICENSE_KEY = ""
+
+# The main RPC URL for Solana interactions. Use a high-performance private RPC for best results.
+RPC_URL = "https://api.mainnet-beta.solana.com"
+
+# Stream transport mode: "grpc" (Yellowstone gRPC) or "ws" (WebSocket RPC pub/sub).
+# gRPC is faster and more reliable; WS is a fallback if gRPC is unavailable.
+STREAM_TRANSPORT = "grpc"
+
+# The gRPC Geyser URL for streaming real-time account/transaction updates.
+# Required when STREAM_TRANSPORT = "grpc".
+GRPC_URL = "https://solana-yellowstone-grpc.publicnode.com:443"
+
+# Token for authenticating with the gRPC endpoint (if required). Leave empty if not needed.
+GRPC_TOKEN = ""
+
+# WebSocket RPC endpoint for real-time updates.
+# Required when STREAM_TRANSPORT = "ws".
+WS_URL = ""
+
+# The wallet private key (Base58 encoded) used for signing transactions.
+# Keep this secret.
+WALLET_PRIVATE_KEY_B58 = ""
+
+# Preferred region for SWQoS providers. Valid values: NewYork, Frankfurt, Amsterdam, SLC, Tokyo, London, LosAngeles, Default
+PREFERRED_REGION = "NewYork"
+
+# The public key of a Durable Nonce account, used to ensure transaction validity over time.
+# Leave empty if not using durable nonces.
+DURABLE_NONCE_PUBKEY = ""
+
+# Enable saving logs to .logs/rust-sniper.log file (default: true).
+SAVE_LOGS = true
+
+
+[trading]
+# === Core Trading Parameters ===
+
+# The fixed amount of SOL to spend on each initial buy order.
+BUY_AMOUNT_SOL = 0.025
+
+# The priority fee (in SOL) added to transactions to encourage faster inclusion by validators.
+# Higher values increase transaction priority but cost more.
+PRIORITY_FEE_SOL = 0.00011
+
+# The bribe amount (in SOL) sent to SWQoS (Jito, Nozomi or Astralane) for faster inclusion.
+# Used for MEV protection and faster execution.
+BRIBE_SOL = 0.00102
+
+# The maximum allowed slippage for buy orders (as a percentage, e.g., 99 = 99%).
+# Higher values allow larger price movements but increase execution risk.
+# Sniper bots typically use high slippage to ensure entry on new launches.
+BUY_SLIPPAGE_PERCENT = 99
+
+# The maximum allowed slippage for sell orders (as a percentage, e.g., 99 = 99%).
+# Higher values help ensure exits complete even in volatile conditions.
+SELL_SLIPPAGE_PERCENT = 99
+
+# The maximum number of concurrent open positions allowed.
+# Set to 0 to disable position limits (not recommended). Must be at least 1.
+MAX_POSITIONS = 3
+
+
+# === Sniper-Specific Settings ===
+
+# Skip tokens launched via Mayhem Token platform.
+# When enabled, ignores new token launches from Mayhem Token deployers.
+SKIP_MAYHEM_TOKEN = true
+
+# Skip tokens launched via PumpFun Classic platform.
+# When enabled, ignores new token launches from PumpFun Classic deployers.
+SKIP_PUMPFUN_CLASSIC = false
+
+# Snipe mode: "launch" to snipe new token launches, or "migration" to snipe migrations to Raydium.
+# Defaults to "launch" if not specified.
+SNIPE_MODE = "launch"
+
+# Deployer wallet addresses to monitor for new token launches or migrations.
+# The bot will snipe tokens created by these wallets. Add wallet public keys as strings.
+SNIPE_DEPLOYER_WALLETS = [
+  "6mWEJG9LoRdto8TwTdZxmnJpkXpTsEerizcGiCNZvzXd",
+  "HyYNVYmnFmi87NsQqWzLJhUTPBKQUfgfhdbBa554nMFF"
+]
+
+
+# === Exit Rules ===
+
+# Hard stop loss percentage (must be negative, e.g., -30 means sell if PnL drops below -30%).
+# Must be between -100 and 0. Triggers an immediate exit when breached.
+STOP_LOSS = -30
+
+# Take profit levels: defined as { target_pnl_percent = X, sell_percent = Y }.
+# When PnL reaches X%, sell Y% of the remaining position.
+# sell_percent must be between 1 and 100.
+TAKE_PROFIT_LEVELS = [
+  { target_pnl_percent = 50, sell_percent = 50 },
+  { target_pnl_percent = 50, sell_percent = 100 }
+]
+
+# Dynamic Trailing Stop Loss (DTSL) levels.
+# As PnL increases, the stop loss floor is raised to lock in profits.
+# Format: { target_pnl_percent = X, floor_pnl_percent = Y, sell_percent = Z, timer_seconds = T }
+# - target_pnl_percent: When PnL reaches this level, the floor is activated
+# - floor_pnl_percent: The minimum PnL floor (must be < target_pnl_percent)
+# - sell_percent: Percentage of position to sell (1-100)
+# - timer_seconds: Optional. If set, requires PnL to stay above floor for this duration before selling
+# Empty list disables DTSL.
+DTSL_LEVELS = [
+  { target_pnl_percent = 50, floor_pnl_percent = 25, sell_percent = 50, timer_seconds = 30 },
+  { target_pnl_percent = 100, floor_pnl_percent = 50, sell_percent = 100, timer_seconds = 30 },
+]
+
+# Enable automatic dump when token migrates from bonding curve to Raydium.
+# When enabled, automatically sells the position when migration occurs.
+DUMP_MIGRATION = false
+
+# Enable automatic dump when bonding curve reaches a certain percentage.
+# When enabled, automatically sells when the bonding curve progress reaches DUMP_BONDING_CURVE_PERCENT.
+DUMP_BONDING_CURVE = false
+
+# Bonding curve percentage threshold for automatic dump (0-100).
+# Only used when DUMP_BONDING_CURVE is true. Must be in [0, 100).
+DUMP_BONDING_CURVE_PERCENT = 99
+
+
+# === Time-Based Exit Rules ===
+
+# Force exit if a position is held longer than MAX_HOLD_TIME_SECONDS.
+# When enabled, positions are closed after the specified duration regardless of PnL.
+ENABLE_MAX_HOLD_TIME = true
+MAX_HOLD_TIME_SECONDS = 300
+
+# Force exit if PnL remains negative for NEGATIVE_PNL_TIMER_SECONDS.
+# When enabled, positions with negative PnL are closed after the timer expires.
+ENABLE_NEGATIVE_PNL_TIMER = true
+NEGATIVE_PNL_TIMER_SECONDS = 15
+
+# Force exit if PnL is above a minimum target for a set duration.
+# When enabled, positions are closed after maintaining the target profit for the specified time.
+ENABLE_MIN_PROFIT_TARGET = true
+MIN_PROFIT_TARGET_PNL_PERCENT = 10
+MIN_PROFIT_TARGET_SECONDS = 30
+
+
+# === Simulation and Risk Controls ===
+
+# Run in simulation mode (paper trading) if true. No real SOL is spent.
+SIMULATE = false
+
+# Maximum portfolio exposure allowed as a percentage of total equity (0-100).
+# Limits total capital deployed across all positions. Higher values allow more aggressive positioning.
+MAX_EXPOSURE_PCT = 40.0
+
+
+# === DCA (Dollar Cost Averaging) Settings ===
+
+# Enable DCA (Dollar Cost Averaging) behavior.
+# When false, all DCA functionality is disabled regardless of other DCA settings.
+ENABLE_DCA = true
+
+# Maximum number of DCA (Dollar Cost Averaging) buys allowed per position.
+# Each DCA buy adds to a losing position to average down entry price. Set to 0 to disable DCA.
+DCA_MAX = 2
+
+# Cooldown (in seconds) between DCA buys.
+# Must be > 0 when DCA_MAX > 0. Prevents too-frequent DCA adds.
+DCA_COOLDOWN_SECS = 45
+
+# Decay factor applied to each subsequent DCA size (0.1-1.0).
+# Each DCA buy is `previous_size * DCA_DECAY`. 0.7 means each add is 70% of the previous.
+DCA_DECAY = 0.7
+
+# Enable simple loss-timer DCA: when underwater by threshold for X seconds, trigger DCA.
+# When enabled, DCA is triggered if position stays below the threshold for the timer duration.
+DCA_ENABLE_LOSS_TIMER = true
+DCA_LOSS_TIMER_SECONDS = 8
+DCA_LOSS_TRIGGER_UNDERWATER_PCT = 15.0

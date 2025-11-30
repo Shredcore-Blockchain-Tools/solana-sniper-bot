@@ -1,0 +1,21 @@
+# User configuration (never commit - contains private keys)
+config.toml
+
+# User data
+.durable_nonce.json
+
+# Logs
+.logs/
+*.log
+
+# Positions
+.positions/
+
+# Telegram session files (if applicable)
+*.session
+*.session-journal
+
+# OS files
+.DS_Store
+Thumbs.db
+
