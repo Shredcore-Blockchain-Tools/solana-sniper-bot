@@ -86,13 +86,13 @@ setup_git_repo() {
             echo "Warning: Could not fetch from remote. Auto-updates may not work."
             return 0
         fi
-        git checkout -b main origin/master 2>/dev/null || true
+        git checkout -b main origin/main 2>/dev/null || true
     else
         git checkout -b main origin/main 2>/dev/null || true
     fi
     
     # Reset to match remote (preserves local files not in repo)
-    git reset --mixed origin/main 2>/dev/null || git reset --mixed origin/master 2>/dev/null || true
+    git reset --mixed origin/main 2>/dev/null || git reset --mixed origin/main 2>/dev/null || true
     
     echo "Git repository initialized."
 }

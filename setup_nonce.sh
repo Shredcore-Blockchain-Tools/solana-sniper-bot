@@ -14,9 +14,88 @@ info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
+# Ensure Solana CLI is installed, install if missing
+ensure_solana_cli() {
+    # Check if solana is already in PATH
+    if command -v solana &>/dev/null; then
+        return 0
+    fi
+    
+    # Check common installation paths
+    local solana_paths=(
+        "$HOME/.local/share/solana/install/active_release/bin"
+        "$HOME/.solana/install/active_release/bin"
+    )
+    
+    for path in "${solana_paths[@]}"; do
+        if [[ -x "$path/solana" ]]; then
+            export PATH="$path:$PATH"
+            if command -v solana &>/dev/null; then
+                return 0
+            fi
+        fi
+    done
+    
+    info "Solana CLI not found. Installing..."
+    
+    # Install Solana CLI using official installer
+    if ! curl --proto '=https' --tlsv1.2 -sSfL https://solana-install.solana.workers.dev | bash; then
+        error "Failed to install Solana CLI. Please install manually: https://solana.com/docs/intro/installation"
+    fi
+    
+    # Add to PATH for current session
+    for path in "${solana_paths[@]}"; do
+        if [[ -x "$path/solana" ]]; then
+            export PATH="$path:$PATH"
+            break
+        fi
+    done
+    
+    # Verify installation
+    if command -v solana &>/dev/null; then
+        info "Solana CLI installed successfully: $(solana --version)"
+        return 0
+    else
+        error "Solana CLI installation completed but 'solana' command not found. Please restart your terminal or run: source ~/.bashrc"
+    fi
+}
+
+# Ensure Python3 is installed, install if missing
+ensure_python3() {
+    if command -v python3 &>/dev/null; then
+        return 0
+    fi
+    
+    info "Python3 not found. Installing..."
+    
+    # Detect package manager and install python3
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get update -qq && sudo apt-get install -y -qq python3
+    elif command -v yum &>/dev/null; then
+        sudo yum install -y -q python3
+    elif command -v dnf &>/dev/null; then
+        sudo dnf install -y -q python3
+    elif command -v pacman &>/dev/null; then
+        sudo pacman -S --noconfirm python
+    elif command -v apk &>/dev/null; then
+        sudo apk add --quiet python3
+    elif command -v brew &>/dev/null; then
+        brew install python3
+    else
+        error "Could not detect package manager to install Python3. Please install manually."
+    fi
+    
+    if command -v python3 &>/dev/null; then
+        info "Python3 installed successfully: $(python3 --version)"
+        return 0
+    else
+        error "Python3 installation failed. Please install manually."
+    fi
+}
+
 # Ensure dependencies
-command -v solana &>/dev/null || error "Solana CLI not installed"
-command -v python3 &>/dev/null || error "Python3 not installed"
+ensure_solana_cli
+ensure_python3
 
 # Install base58 if needed
 python3 -c "import base58" 2>/dev/null || {
