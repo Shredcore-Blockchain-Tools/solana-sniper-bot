@@ -74,25 +74,29 @@ setup_git_repo() {
     echo ""
     echo "Initializing git repository for auto-updates..."
     
-    # Initialize git repo
-    git init -q
+    # Initialize git repo with main as default branch
+    git init -q -b main 2>/dev/null || git init -q
     
     # Add origin remote
     git remote add origin "$REPO_URL"
     
-    # Fetch from remote
+    # Fetch from remote (try main first, then master)
+    local remote_branch="main"
     if ! git fetch origin main 2>/dev/null; then
         if ! git fetch origin master 2>/dev/null; then
             echo "Warning: Could not fetch from remote. Auto-updates may not work."
             return 0
         fi
-        git checkout -b main origin/main 2>/dev/null || true
-    else
-        git checkout -b main origin/main 2>/dev/null || true
+        remote_branch="master"
     fi
     
+    # Checkout the fetched branch as main locally
+    git checkout -b main "origin/${remote_branch}" 2>/dev/null || \
+    git checkout main 2>/dev/null || \
+    git checkout -B main "origin/${remote_branch}" 2>/dev/null || true
+    
     # Reset to match remote (preserves local files not in repo)
-    git reset --mixed origin/main 2>/dev/null || git reset --mixed origin/main 2>/dev/null || true
+    git reset --mixed "origin/${remote_branch}" 2>/dev/null || true
     
     echo "Git repository initialized."
 }
@@ -127,20 +131,24 @@ auto_update() {
         return 0
     fi
     
-    # Get current branch
-    local current_branch
-    current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-    
-    # Check if remote branch exists
-    if ! git rev-parse "origin/${current_branch}" &>/dev/null; then
-        echo "Warning: Remote branch origin/${current_branch} not found."
+    # Determine which remote branch to use (prefer main, fallback to master)
+    local remote_branch=""
+    if git rev-parse "origin/main" &>/dev/null; then
+        remote_branch="main"
+    elif git rev-parse "origin/master" &>/dev/null; then
+        remote_branch="master"
+    else
+        echo "Warning: No remote branch (main or master) found."
         return 0
     fi
+    
+    # Ensure we're on main branch locally
+    git checkout main 2>/dev/null || git checkout -b main "origin/${remote_branch}" 2>/dev/null || true
     
     # Check if there are updates
     local local_commit remote_commit
     local_commit=$(git rev-parse HEAD 2>/dev/null || echo "")
-    remote_commit=$(git rev-parse "origin/${current_branch}" 2>/dev/null || echo "")
+    remote_commit=$(git rev-parse "origin/${remote_branch}" 2>/dev/null || echo "")
     
     if [[ -z "$local_commit" ]] || [[ -z "$remote_commit" ]]; then
         echo "Warning: Could not determine commit status."
@@ -155,7 +163,7 @@ auto_update() {
     echo "Updates available. Updating..."
     
     # Pull updates
-    if git pull origin "$current_branch" 2>/dev/null; then
+    if git pull origin "$remote_branch" 2>/dev/null; then
         echo ""
         echo "=== Update successful! ==="
         
