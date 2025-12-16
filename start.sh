@@ -514,7 +514,7 @@ main() {
     
     # Set environment variables
     export BOT_CONFIG="./config.toml"
-    export RUST_LOG="info"
+    export RUST_LOG="${RUST_LOG:-info,h2=warn,hyper=warn,rustls=warn,tungstenite=warn,reqwest=warn}"
     
     # Check for binary
     if [[ ! -x "$BINARY_NAME" ]]; then
