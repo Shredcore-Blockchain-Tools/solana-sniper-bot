@@ -74,8 +74,10 @@ setup_git_repo() {
     echo ""
     echo "Initializing git repository for auto-updates..."
     
-    # Disable interactive credential prompts (public repos don't need auth)
+    # Disable all credential prompts (public repos don't need auth)
     export GIT_TERMINAL_PROMPT=0
+    export GIT_ASKPASS=""
+    export GIT_SSH_COMMAND="ssh -oBatchMode=yes"
     
     # Initialize git repo with main as default branch
     git init -q -b main 2>/dev/null || git init -q
@@ -85,8 +87,8 @@ setup_git_repo() {
     
     # Fetch from remote (try main first, then master)
     local remote_branch="main"
-    if ! git fetch origin main 2>/dev/null; then
-        if ! git fetch origin master 2>/dev/null; then
+    if ! git -c credential.helper= fetch origin main 2>/dev/null; then
+        if ! git -c credential.helper= fetch origin master 2>/dev/null; then
             echo "Warning: Could not fetch from remote. Auto-updates may not work."
             return 0
         fi
@@ -117,8 +119,10 @@ auto_update() {
         return 0
     fi
     
-    # Disable interactive credential prompts (public repos don't need auth)
+    # Disable all credential prompts (public repos don't need auth)
     export GIT_TERMINAL_PROMPT=0
+    export GIT_ASKPASS=""
+    export GIT_SSH_COMMAND="ssh -oBatchMode=yes"
     
     # Setup git repo if needed (for zip downloads)
     setup_git_repo
@@ -132,7 +136,7 @@ auto_update() {
     echo "=== Checking for updates ==="
     
     # Fetch latest changes
-    if ! git fetch origin 2>/dev/null; then
+    if ! git -c credential.helper= fetch origin 2>/dev/null; then
         echo "Warning: Could not fetch updates. Continuing with current version."
         return 0
     fi
@@ -169,7 +173,7 @@ auto_update() {
     echo "Updates available. Updating..."
     
     # Pull updates
-    if git pull origin "$remote_branch" 2>/dev/null; then
+    if git -c credential.helper= pull origin "$remote_branch" 2>/dev/null; then
         echo ""
         echo "=== Update successful! ==="
         
