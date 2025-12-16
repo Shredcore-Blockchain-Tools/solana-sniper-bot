@@ -158,7 +158,7 @@ MAX_EXPOSURE_PCT = 40.0
 
 # Enable DCA (Dollar Cost Averaging) behavior.
 # When false, all DCA functionality is disabled regardless of other DCA settings.
-ENABLE_DCA = true
+ENABLE_DCA = false
 
 # Maximum number of DCA (Dollar Cost Averaging) buys allowed per position.
 # Each DCA buy adds to a losing position to average down entry price. Set to 0 to disable DCA.
