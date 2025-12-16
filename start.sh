@@ -132,6 +132,18 @@ auto_update() {
         return 0
     fi
     
+    # Ensure origin remote matches REPO_URL (for users upgrading from older releases)
+    if [[ -n "${REPO_URL:-}" ]]; then
+        if git remote get-url origin &>/dev/null; then
+            current_url=$(git remote get-url origin 2>/dev/null || echo "")
+            if [[ "$current_url" != "$REPO_URL" ]]; then
+                git -c credential.helper= remote set-url origin "$REPO_URL" 2>/dev/null || true
+            fi
+        else
+            git remote add origin "$REPO_URL" 2>/dev/null || true
+        fi
+    fi
+    
     echo ""
     echo "=== Checking for updates ==="
     
