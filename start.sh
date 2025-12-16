@@ -74,6 +74,9 @@ setup_git_repo() {
     echo ""
     echo "Initializing git repository for auto-updates..."
     
+    # Disable interactive credential prompts (public repos don't need auth)
+    export GIT_TERMINAL_PROMPT=0
+    
     # Initialize git repo with main as default branch
     git init -q -b main 2>/dev/null || git init -q
     
@@ -113,6 +116,9 @@ auto_update() {
         echo "Warning: Cannot check for updates without git."
         return 0
     fi
+    
+    # Disable interactive credential prompts (public repos don't need auth)
+    export GIT_TERMINAL_PROMPT=0
     
     # Setup git repo if needed (for zip downloads)
     setup_git_repo
